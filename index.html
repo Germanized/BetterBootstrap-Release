@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Updated CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterBootstrap</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Add basic styling for the new log container -->
+    <style>
+        .logs {
+            margin-top: calc(var(--spacing-unit) * 2.5);
+            max-height: 250px; /* Limit height */
+            display: flex;
+            flex-direction: column;
+        }
+        .log-title { /* Style the H3 inside */
+            margin-bottom: var(--spacing-unit);
+            padding-bottom: var(--spacing-unit);
+            border-bottom: 1px solid var(--color-border-subtle);
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+        #log-output {
+            font-family: monospace; /* Use monospace for logs */
+            font-size: 0.75rem;   /* Smaller font size */
+            line-height: 1.4;
+            color: var(--color-text-secondary);
+            overflow-y: auto;   /* Enable scrolling */
+            flex-grow: 1;       /* Allow div to fill space */
+            padding-right: calc(var(--spacing-unit)*0.5); /* Space for scrollbar */
+        }
+        #log-output p {
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            padding-bottom: calc(var(--spacing-unit) * 0.5);
+            border-bottom: 1px dashed var(--color-border-subtle); /* Separator */
+            word-break: break-all; /* Prevent long lines from overflowing */
+            white-space: pre-wrap; /* Preserve whitespace */
+        }
+         #log-output p:last-child {
+             border-bottom: none;
+             margin-bottom: 0;
+         }
+         /* Style log messages based on content? (Optional, complex) */
+         /* #log-output p:has(> .log-error) { color: var(--color-status-error); } */
+    </style>
+</head>
+<body data-theme="dark"> <!-- Theme set by JS -->
+
+    <!-- Custom Title Bar -->
+    <div id="title-bar">
+        <div id="title-content">
+            <img src="./assets/images/icon.png" alt="App Icon" id="title-bar-icon">
+            <span id="title">BetterBootstrap</span>
+        </div>
+        <div id="window-controls">
+            <button id="minimize-btn" class="title-bar-btn" aria-label="Minimize" tabindex="-1"><svg width="12" height="12" viewBox="0 0 12 12"><rect fill="currentColor" width="10" height="1" x="1" y="5.5"></rect></svg></button>
+            <button id="maximize-btn" class="title-bar-btn" aria-label="Maximize" tabindex="-1"><svg width="12" height="12" viewBox="0 0 12 12"><rect width="9" height="9" x="1.5" y="1.5" fill="none" stroke="currentColor" stroke-width="1"></rect></svg></button>
+            <button id="close-btn" class="title-bar-btn close-btn" aria-label="Close" tabindex="-1"><svg width="12" height="12" viewBox="0 0 12 12"><polygon fill="currentColor" points="11.4,1.8 10.2,0.6 6,4.8 1.8,0.6 0.6,1.8 4.8,6 0.6,10.2 1.8,11.4 6,7.2 10.2,11.4 11.4,10.2 7.2,6"></polygon></svg></button>
+        </div>
+    </div>
+
+    <!-- Main App Structure -->
+    <div class="app-container">
+        <header class="site-header app-header">
+            <div class="header-content-area">
+                <a href="#dashboard" class="logo app-logo" tabindex="-1"><span class="logo-better">Better</span><span class="logo-bootstrap">Bootstrap</span></a>
+                <nav class="main-nav app-nav">
+                    <a href="#dashboard" class="nav-link active" tabindex="-1">Dashboard</a>
+                    <a href="#settings" class="nav-link" tabindex="-1">Settings</a>
+                    <a href="#credits" class="nav-link" tabindex="-1">Credits</a>
+                </nav>
+            </div>
+        </header>
+         <hr class="header-divider">
+        <main class="app-main">
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="app-section active-section">
+                <div class="container section-content">
+                    <h1 class="section-title-app">Dashboard</h1>
+                    <div class="status-area card-style reveal reveal-fade-up">
+                        <p>BetterDiscord Status: <strong id="bd-status-text">Checking...</strong></p>
+                        <button id="install-bd-button" class="control-button small-button">Install BD</button>
+                    </div>
+                     <form class="settings-form dashboard-settings card-style reveal reveal-fade-up reveal-delay-1">
+                         <h3 class="form-title">Core Automation</h3>
+                          <div class="setting-item"><label class="checkbox-label"><input type="checkbox" id="startOnLogin" class="styled-checkbox"><span class="checkbox-custom"></span>Launch on Windows startup</label></div>
+                          <div class="setting-item"><label class="checkbox-label"><input type="checkbox" id="runInSystemTray" class="styled-checkbox"><span class="checkbox-custom"></span>Keep in system tray when closed</label></div>
+                          <div class="setting-item"><label class="checkbox-label"><input type="checkbox" id="autoCheckUpdates" class="styled-checkbox"><span class="checkbox-custom"></span>Automatically check BD status</label></div>
+                     </form>
+
+                     <!-- App Status Display Area -->
+                     <div id="app-status-area" class="app-status-display">
+                         <p id="app-status-message"></p>
+                         <div class="progress-bar-container" id="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+                     </div>
+
+                    <!-- *** ADDED Log Output Container *** -->
+                    <div id="log-output-container" class="card-style logs reveal reveal-fade-up reveal-delay-1">
+                        <h3 class="log-title">Operation Logs</h3>
+                        <div id="log-output">
+                            <!-- Log messages will be added here by renderer.js -->
+                        </div>
+                    </div>
+                    <!-- *** END Log Output Container *** -->
+
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="app-section">
+                 <div class="container section-content">
+                     <h1 class="section-title-app">Settings</h1>
+                     <form class="settings-form detailed-settings card-style reveal reveal-fade-up">
+                         <h3 class="form-title">Notifications</h3>
+                         <div class="setting-item"><label class="checkbox-label"><input type="checkbox" id="enableNotifications" class="styled-checkbox"><span class="checkbox-custom"></span>Show system tray notifications</label></div>
+                         <h3 class="form-title">Troubleshooting</h3>
+                          <div class="setting-item button-group">
+                             <p>Manual Actions:</p>
+                             <div class="button-row"> <!-- Wrap buttons for better layout -->
+                                 <button id="repair-bd-button" type="button" class="control-button small-button">Repair BD Installation</button>
+                                 <button id="uninstall-bd-button" type="button" class="control-button small-button danger-button">Uninstall BD</button>
+                             </div>
+                             <small>Use repair if BD is acting strangely. Uninstall removes BD completely.</small>
+                          </div>
+                     </form>
+                </div>
+             </section>
+
+             <!-- Credits Section -->
+             <section id="credits" class="app-section">
+                  <div class="container section-content">
+                      <h1 class="section-title-app">Credits</h1>
+                      <div class="credits-grid horizontal-credits">
+                         <!-- Credit Cards -->
+                         <div class="credit-card app-credit-card reveal reveal-fade-up">
+                             <div class="profile-picture-frame"> <img src="./assets/images/zerebos-placeholder.png" alt="Zerebos" class="profile-pic" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'avatar-placeholder\'>Z</div>';"> </div>
+                             <div class="credit-info"> <h3>Zerebos</h3> <p class="subtext">Creator of BetterDiscord.</p> <a href="#" class="external-link" data-url="https://github.com/BetterDiscord/BetterDiscord">View Project <span class="link-arrow">↗</span></a> </div>
+                         </div>
+                         <div class="credit-card app-credit-card reveal reveal-fade-up reveal-delay-1">
+                             <div class="profile-picture-frame"> <img src="./assets/images/germanized-placeholder.png" alt="Germanized" class="profile-pic" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'avatar-placeholder\'>G</div>';"> </div>
+                             <div class="credit-info"> <h3>Germanized</h3> <p class="subtext">Creator of BetterBootstrap / Plugins.</p> <a href="#" class="external-link" data-url="https://github.com/Germanized">View GitHub <span class="link-arrow">↗</span></a> </div>
+                         </div>
+                      </div>
+                 </div>
+              </section>
+         </main>
+    </div>
+
+    <footer class="site-footer minimal-footer app-footer">
+        <div class="container footer-content">
+             <p class="version-info">Current Version: 1.0.0 | BetterDiscord Installer Logic</p>
+             <p class="copyright-info">© 2024 BetterBootstrap. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Preload script link -->
+    <script src="./renderer.js"></script>
+</body>
+</html>
