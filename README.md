@@ -4,7 +4,7 @@
 
 
 ## Screenshot
-![BetterBootstrap Screenshot](assets/images/screenshotv2.png)
+![BetterBootstrap Screenshot](assets/images/screenshotv3.png)
 
 A simple, modern application built with Electron to manage your BetterDiscord installation. It aims to automate and simplify installing, uninstalling, and repairing BetterDiscord.
 
