@@ -49,7 +49,6 @@ There are two ways to use BetterBootstrap: running the pre-built executable or r
 6.  **Usage:** The application interface and functionality are the same as described in Option 1. Use the UI to manage BetterDiscord. Check the terminal window where you ran `npm start` *and* the in-app logs for detailed output.
 
 ## Building Your Own Executable (`.exe`)
-(NOT FIT TO BE BUILT YET TRYING TO FIX)
 
 If you have run the application from source (Option 2) and want to create your own portable `.exe`:
 
