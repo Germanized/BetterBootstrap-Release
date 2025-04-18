@@ -1,4 +1,4 @@
-// G:\Downloads\betterbootstrap-app\main.js - FINAL V3.6 (Auto-Install & Fixes)
+// G:\Downloads\betterbootstrap-app\main.js - FINAL V3.7 (Auto-Install & Fixed not Compiling)
 
 const { app, BrowserWindow, ipcMain, Tray, Menu, shell, net, dialog, nativeTheme } = require('electron');
 const path = require('path');
@@ -71,7 +71,122 @@ async function executeBdAction(actionName, isAuto = false) { // Added isAuto fla
 }
 
 // --- Window Management ---
-function createWindow() { /* ... same as V3.5 ... */ const isDarkMode = nativeTheme.shouldUseDarkColors; mainWindow = new BrowserWindow({ width: 850, height: 650, minWidth: 700, minHeight: 550, show: false, icon: TRAY_ICON_PATH, frame: false, titleBarStyle: 'hidden', backgroundColor: isDarkMode ? '#141416' : '#FFFFFF', webPreferences: { preload: PRELOAD_SCRIPT_PATH, contextIsolation: true, nodeIntegration: false, sandbox: false, devTools: !app.isPackaged }, }); mainProcessDependencies.window = mainWindow; mainWindow.loadFile(RENDERER_HTML_PATH); mainWindow.once('ready-to-show', () => { mainWindow.show(); mainWindow.webContents.send('set-theme', isDarkMode ? 'dark' : 'light'); mainWindow.webContents.send('settings-loaded', store.store || {}); checkBdBasicInstall().then(inst => { mainWindow.webContents.send('bd-status', { installed: inst }); handleAutoInstall(); /* <<< Trigger auto-install check here */ }); }); nativeTheme.on('updated', () => { const newIsDarkMode = nativeTheme.shouldUseDarkColors; mainWindow?.webContents.send('set-theme', newIsDarkMode ? 'dark' : 'light'); }); mainWindow.on('close', (event) => { if (!isQuitting && getSetting('runInSystemTray', true)) { event.preventDefault(); mainWindow.hide(); if(getSetting('enableNotifications', true) && appTray && !appTray.isDestroyed()){ try { appTray.displayBalloon({ title: 'BetterBootstrap', content: 'Minimized to tray.', icon: TRAY_ICON_PATH }); } catch(e){console.error("Tray balloon err:",e);} } } else { isQuitting = true; } }); mainWindow.on('closed', () => { mainWindow = null; mainProcessDependencies.window = null; if (!isQuitting && !getSetting('runInSystemTray', true)) app.quit(); }); }
+function createWindow() {
+    const isDarkMode = nativeTheme.shouldUseDarkColors;
+    mainWindow = new BrowserWindow({
+        width: 850,
+        height: 650,
+        minWidth: 700,
+        minHeight: 550,
+        show: false, // Keep show: false initially
+        icon: TRAY_ICON_PATH,
+        frame: false,
+        titleBarStyle: 'hidden',
+        backgroundColor: isDarkMode ? '#141416' : '#FFFFFF',
+        webPreferences: {
+            preload: PRELOAD_SCRIPT_PATH,
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: false,
+            // Restore original DevTools setting: enable only when not packaged
+            devTools: !app.isPackaged
+        },
+    });
+
+    mainProcessDependencies.window = mainWindow;
+
+    // Load the HTML file
+    mainWindow.loadFile(RENDERER_HTML_PATH)
+        .catch(err => {
+            // Log errors if the file fails to load
+            console.error("[Main Proc] Critical Error: loadFile FAILED:", err);
+            dialog.showErrorBox("Load Error", `Failed to load the application interface: ${err.message}`);
+            // Consider quitting if the UI can't load
+            // app.quit();
+        });
+
+    // Show the window gracefully when it's ready
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show();
+        mainWindow.webContents.send('set-theme', isDarkMode ? 'dark' : 'light');
+        mainWindow.webContents.send('settings-loaded', store.store || {}); // Send initial settings
+
+        // Check initial BD status and potentially trigger auto-install
+        checkBdBasicInstall().then(inst => {
+            mainWindow.webContents.send('bd-status', { installed: inst });
+            handleAutoInstall(); // Trigger auto-install check after status known
+        }).catch(err => {
+            console.error("[Main Proc] Error during initial checkBdBasicInstall in ready-to-show:", err);
+            mainWindow.webContents.send('bd-status', { installed: false, error: true }); // Send error status
+            handleAutoInstall(); // Still attempt auto-install logic
+        });
+    });
+
+    // Handle theme updates from the OS
+    nativeTheme.on('updated', () => {
+        const newIsDarkMode = nativeTheme.shouldUseDarkColors;
+        mainWindow?.webContents.send('set-theme', newIsDarkMode ? 'dark' : 'light');
+    });
+
+    // Handle window close: hide to tray or quit
+    mainWindow.on('close', (event) => {
+        if (!isQuitting && getSetting('runInSystemTray', true)) {
+            event.preventDefault(); // Prevent the window from actually closing
+            mainWindow.hide();
+            // Show tray notification if enabled
+            if (getSetting('enableNotifications', true) && appTray && !appTray.isDestroyed()) {
+                try {
+                    appTray.displayBalloon({ title: 'BetterBootstrap', content: 'Minimized to tray.', icon: TRAY_ICON_PATH });
+                } catch (e) { console.error("Tray balloon err:", e); }
+            }
+        } else {
+            // Allow the window to close, which will trigger the 'closed' event
+            isQuitting = true;
+        }
+    });
+
+    // Handle when the window is actually closed
+    mainWindow.on('closed', () => {
+        console.log("[Main Proc] Event: closed"); // Keep logging for clarity
+        mainWindow = null; // Dereference the window object
+        mainProcessDependencies.window = null;
+
+        // Determine if closing this window should trigger an app quit
+        // This happens if the setting "runInSystemTray" is FALSE.
+        const shouldQuitOnClose = !getSetting('runInSystemTray', true);
+
+        if (shouldQuitOnClose && !isQuitting) {
+            // If we ARE supposed to quit when the window closes (not running in tray),
+            // AND the app hasn't already started the quitting process (e.g., via tray menu),
+            // THEN we initiate the quit now.
+            console.log("[Main Proc] Quitting app because last window closed and not configured to run in tray.");
+            app.quit();
+        } else if (isQuitting) {
+             // If the app is already quitting (e.g., initiated by tray menu or Cmd+Q),
+             // the 'closed' event is just part of that process. Don't call app.quit() again.
+             console.log("[Main Proc] Window closed during app quit sequence. No additional action needed here.");
+        } else {
+            // This case means shouldQuitOnClose is false (we ARE configured to run in tray)
+            // AND isQuitting is false (user just closed the window, didn't select Quit)
+            console.log("[Main Proc] Window closed, but app remains running in tray.");
+        }
+    });
+    // Optional: Handle renderer process crashes
+    mainWindow.webContents.on('crashed', (event, killed) => {
+        console.error(`[Main Proc] WebContents crashed! Killed: ${killed}`);
+        dialog.showErrorBox("Renderer Process Crashed", "The application's display process crashed unexpectedly. Please try restarting the application.");
+        // Decide if you want to quit or try reloading/recreating
+        // isQuitting = true;
+        // app.quit();
+    });
+
+     // Optional: Handle load failures more explicitly if needed
+     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error(`[Main Proc] WebContents Event: did-fail-load - Code: ${errorCode}, Desc: ${errorDescription}, URL: ${validatedURL}`);
+        // Can show an error specific to loading failure if loadFile's catch isn't sufficient
+    });
+
+} // End of createWindow function
 
 // --- System Tray ---
 function createTray() { /* ... same as V3.5 ... */ if (!fsSync.existsSync(TRAY_ICON_PATH)) { console.error("Tray icon missing:", TRAY_ICON_PATH); return; } try { appTray = new Tray(TRAY_ICON_PATH); const contextMenu = Menu.buildFromTemplate([ { label: 'Open BetterBootstrap', click: () => { if (!mainWindow) createWindow(); else { mainWindow.show(); mainWindow.focus(); } } }, { type: 'separator' }, { label: 'Install / Update BD', click: () => { mainWindow?.show(); executeBdAction('install'); } }, { label: 'Repair BD', click: () => { mainWindow?.show(); executeBdAction('repair'); } }, { label: 'Uninstall BD', click: () => { mainWindow?.show(); executeBdAction('uninstall'); } }, { type: 'separator' }, { label: 'Quit BetterBootstrap', click: () => { isQuitting = true; app.quit(); } } ]); appTray.setToolTip('BetterBootstrap'); appTray.setContextMenu(contextMenu); appTray.on('click', () => { if (!mainWindow) { createWindow(); } else { if (mainWindow.isVisible() && mainWindow.isFocused()) mainWindow.hide(); else { mainWindow.show(); mainWindow.focus(); } } }); } catch (trayError) { console.error("Failed tray create:", trayError); appTray = null; } }
