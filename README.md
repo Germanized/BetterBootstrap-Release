@@ -1,11 +1,11 @@
 # BetterBootstrap (UNOFFICIAL)
 ![BetterBootstrapBanner](assets/images/BBbannerv2.png)
 
-
-
+-
+-
 ## Update: I was banned from their Discord after sharing this project, so I want to clearly state that this is completely unofficial and not affiliated with them in any way. As much as I’d love the opportunity to collaborate, I fully respect their concerns and boundaries. That said, this project is open source and made independently with no intention of causing issues.
-
-
+-
+-
 
 
 ## Screenshot
