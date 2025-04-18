@@ -1,5 +1,5 @@
 # BetterBootstrap
-![BetterBootstrapBanner](assets/images/BBbanner.png)
+![BetterBootstrapBanner](assets/images/BBbannerv2.png)
 
 
 
