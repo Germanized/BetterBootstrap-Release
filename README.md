@@ -92,4 +92,4 @@ If you have run the application from source (Option 2) and want to create your o
 
 ## License
 
-This project is licensed under the MIT License  - see the LICENSE file for details. (Create a `LICENSE` file).
+This project is licensed under the MIT License  - see the LICENSE file for details. 
