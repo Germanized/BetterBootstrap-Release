@@ -87,7 +87,7 @@ If you have run the application from source (Option 2) and want to create your o
 *   **Germanized:** For the original BetterBootstrap concept and UI design. ([GitHub Profile](https://github.com/Germanized))
 *   **Electron:** For the framework used to build this application. ([Electron Website](https://www.electronjs.org/))
 *   **Node.js Modules:** `electron-store`, `find-process`, `tree-kill`, `phin`.
-*   **Contributors:** Anyone who helps improve this project!
+*   **Contributors:** No one so far I dont know any developers
 
 ## License
 
